@@ -1,6 +1,6 @@
 # Multi-Cam-Motion
 
-######An ongoing project
+An ongoing project
 
 Multi camera motion detection using purely opencv + numpy + RaspberryPi
 
