@@ -4,7 +4,7 @@ import datetime
 import time
 
 class BasicMotionDetector:
-	def __init__(self, accumWeight=0.5, deltaThresh=10, minArea=3000, maxArea=6000):
+	def __init__(self, accumWeight=0.5, deltaThresh=5, minArea=5000)#, maxArea=6000):
 
 		self.accumWeight = accumWeight
 		self.deltaThresh = deltaThresh
@@ -34,7 +34,7 @@ class BasicMotionDetector:
 		
 		for c in contours:
 
-			if cv2.contourArea(c) > self.minArea and cv2.contourArea(c) < self.maxArea:
+			if cv2.contourArea(c) > self.minArea:#and cv2.contourArea(c) < self.maxArea:
 				locs.append(c)
 
 		# locations
