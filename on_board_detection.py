@@ -6,12 +6,12 @@ import os
 import math
 
 
-#from gpio import *
+from gpio import *
 #from Motion_Detection import BasicMotionDetector
 from predestrain_detect import predestrain_detection, haar_cascade_setection
 
-camera1 = camera()
-camera2 = camera()
+#camera1 = camera()
+#camera2 = camera()
 
 
 def cams_2():
@@ -119,17 +119,21 @@ def test_image(path):
 	cv2.destroyAllWindows()
 
 def test_video(path):
-
+	#camera1 = camera(1)
 	hog = cv2.HOGDescriptor()
 	hog.setSVMDetector(cv2.HOGDescriptor_getDefaultPeopleDetector())
 	body_classifier = cv2.CascadeClassifier('haarcascade_pedestrian.xml')
 	cap = cv2.VideoCapture(path)
+	threads = []
 	if cap.isOpened() == False:
 		print("cannot open video file")
+	index = 0
 	while True:
 		flag, img = cap.read()
-		camera2.off()
-		if flag == True:
+		#camera2.off()
+		
+		if flag == True and index == 3:
+			index = 0
 			w = math.ceil(img.shape[0] / 2)
 			h = math.ceil(img.shape[1] / 2)
 			#img, sizes = predestrain_detection(img, hog)
@@ -140,11 +144,25 @@ def test_video(path):
 				print('danger!')
 				text = 'dangerous!'
 				
-				cv2.putText(img, text, (50, 50), cv2.FONT_HERSHEY_SIMPLEX, 2.0, (0, 255, 0), lineType=cv2.LINE_AA)
-				camera1.vibrate()
+				cv2.putText(img, text, (50, 50),
+				 cv2.FONT_HERSHEY_SIMPLEX, 2.0, (0, 255, 0),
+				  lineType=cv2.LINE_AA)
+				#camera1.thread()
+				#thread = camera(1)
+				#thread.start()
+				#camera1.off()
+				#camera1.stop()
+				thread = vibrate_thread(1, "vibrate", 1, 1)	
+				thread.start()
+				#thread.join()
 			cv2.imshow('image', img)
 			if cv2.waitKey(1) & 0xFF == ord('q'):
+				
 				break
+		else:
+			index += 1
+			print(index)
+	
 	cap.release()
 	cv2.destroyAllWindows()
 
