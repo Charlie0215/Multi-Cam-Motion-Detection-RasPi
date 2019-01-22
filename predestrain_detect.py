@@ -6,6 +6,10 @@ import os
 import math
 from utils import select_ROI
 
+import threading
+
+lock1 = threading.Lock()
+
 kernel_size = 11
 imagePath = '/Users/dai/Desktop/Project/Multi-Cam-Motion-Detection-RasPi/pedestrian-detection/images/person_010.bmp'
 hog = cv2.HOGDescriptor()
@@ -16,6 +20,8 @@ hog.setSVMDetector(cv2.HOGDescriptor_getDefaultPeopleDetector())
 #parser.add_argument('-i', dest='images', type=str, required=True, help='path to image directory')
 #opt = vars(parser.parse_args())
 def haar_cascade_setection(image, classifier):
+
+	
 	sizes = []
 
 	#height = min(700, image.shape[0])
@@ -26,8 +32,10 @@ def haar_cascade_setection(image, classifier):
 	#width = math.ceil(image.shape[1] / 2)
 	image = cv2.resize(image, (height, width))
 	image_size = float(height * width)
+	print("#"*30, image.shape)
 	img = image.copy()
 	img = select_ROI(img)
+	
 	image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 	masked_image = select_ROI(image)
 	#image = cv2.GaussianBlur(image,(kernel_size,kernel_size),0)
