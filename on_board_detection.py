@@ -9,11 +9,14 @@ import threading
 
 #from gpio import *
 #from Motion_Detection import BasicMotionDetector
-from predestrain_detect import predestrain_detection, haar_cascade_setection
+from predestrain_detect import predestrain_detection, haar_cascade_detection
 from detection_thread import *
 from thread_io import *
 #camera1 = camera()
 #camera2 = camera()
+
+lock1 = threading.Lock()
+lock2 = threading.Lock()
 
 def cams_2():
 	# initialize hog descriptor
@@ -140,7 +143,7 @@ def test_video(path):
 		if flag == True and index == 3:
 			index = 0
 			#img, sizes = predestrain_detection(img, hog)
-			img, sizes = haar_cascade_setection(img, body_classifier)
+			img, sizes = haar_cascade_detection(img, body_classifier)
 			img = cv2.resize(img, (h, w))
 			
 			if len(sizes) > 0:
@@ -163,6 +166,10 @@ def test_video(path):
 	cv2.destroyAllWindows()
 
 def test_video_pair(path1, path2):
+	#######################################
+	#Serial Implementation of 2-Camera case
+	#######################################
+	
 	#camera1 = camera(1)
 	hog = cv2.HOGDescriptor()
 	hog.setSVMDetector(cv2.HOGDescriptor_getDefaultPeopleDetector())
@@ -191,8 +198,8 @@ def test_video_pair(path1, path2):
 		if index == 3:
 			index = 0
 			#img, sizes = predestrain_detection(img, hog)
-			img1, sizes1 = haar_cascade_setection(img1, body_classifier)
-			img2, sizes2 = haar_cascade_setection(img2, body_classifier)
+			img1, sizes1 = haar_cascade_detection(img1, body_classifier)
+			img2, sizes2 = haar_cascade_detection(img2, body_classifier)
 
 			img1 = cv2.resize(img1, (h, w))
 			img2 = cv2.resize(img1, (h, w))
@@ -225,7 +232,6 @@ def test_video_pair(path1, path2):
 	cap.release()
 	cv2.destroyAllWindows()
 
-
 # Threading class implementation
 def test_video_pair_2(path1, path2):
 	thread1 = cam_detection(1, 'haarcascade_pedestrian.xml', path1)
@@ -257,8 +263,8 @@ def test_video_pair_3(path1, path2):
 		if index == 3:
 			index = 0
 			#img, sizes = predestrain_detection(img, hog)
-			img1, sizes1 = haar_cascade_setection(img1, body_classifier)
-			img2, sizes2 = haar_cascade_setection(img2, body_classifier)
+			img1, sizes1 = haar_cascade_detection(img1, body_classifier)
+			img2, sizes2 = haar_cascade_detection(img2, body_classifier)
 
 			img1 = cv2.resize(img1, (h, w))
 			img2 = cv2.resize(img1, (h, w))
@@ -296,14 +302,11 @@ def test_video_pair_3(path1, path2):
 	cap.release()
 	cv2.destroyAllWindows()
 
-def show_image(img):
-	cv2.imshow("image", img)
-	return
-
-
 def test_video_pair_4(path1, path2):
-	opt = argparse.ArgumentParser()
-	opt.add_argument('-d', '--d', default=1, type=int, help='1: display image')
+	parser = argparse.ArgumentParser()
+	parser.add_argument('-d', dest='display', default=1, type=int, help='1: display image')
+	opt = parser.parse_args()
+
 	vs1 = WebcamVideoStream_main_thread(path1, 1, 'haarcascade_pedestrian.xml').start()
 	vs2 = WebcamVideoStream_main_thread(path2, 2, 'haarcascade_pedestrian.xml').start()
 	fps = FPS().start()
@@ -315,8 +318,9 @@ def test_video_pair_4(path1, path2):
 		#print('$'*30, index)
 		if index == 3: 
 			index = 0
-			cv2.imshow('cam1', img1)
-			cv2.imshow('cam2', img2)
+			if opt.display == 1:
+				cv2.imshow('cam1', img1)
+				cv2.imshow('cam2', img2)
 			if cv2.waitKey(1) & 0xFF == ord('q'):
 				break
 		else:
@@ -332,12 +336,84 @@ def test_video_pair_4(path1, path2):
 	cv2.destroyAllWindows()
 	
 
+def test_video_pair_5(path1, path2):
+	###################################
+	# Multi-threading IO with serial detection
+	###################################
+
+	parser = argparse.ArgumentParser()
+	parser.add_argument('-d', dest='display', default=1, type=int, help='1: display image')
+	opt = parser.parse_args()
+	
+	vs1 = WebcamVideoStream_main_thread(path1, 1, 'haarcascade_pedestrian.xml').start()
+	vs2 = WebcamVideoStream_main_thread(path2, 2, 'haarcascade_pedestrian.xml').start()
+
+	body_classifier = cv2.CascadeClassifier('haarcascade_pedestrian.xml')
+
+	fps = FPS().start()
+	index = 0
+	#while True:
+	for i in range(4000):
+
+		img1 = vs1.read()
+		w1 = math.ceil(img1.shape[0] / 2)
+		h1 = math.ceil(img1.shape[1] / 2)
+		
+		img2 = vs2.read()
+		w2 = math.ceil(img2.shape[0] / 2)
+		h2 = math.ceil(img2.shape[1] / 2)
+
+		img1 = cv2.cvtColor(img1, cv2.COLOR_BGR2GRAY)
+		img2 = cv2.cvtColor(img2, cv2.COLOR_BGR2GRAY)
+		if index == 1: 
+			index = 0
+			if opt.display == 1:
+				lock1.acquire()
+				img1, sizes1 = haar_cascade_detection(img1, body_classifier)
+				img1 = cv2.resize(img1, (h1, w1))
+				if len(sizes1) > 0:
+					print('danger!')
+					text = 'dangerous!'
+					cv2.putText(img1, text, (50, 50),
+				 	cv2.FONT_HERSHEY_SIMPLEX, 2.0, (0, 255, 0),
+				 		 lineType=cv2.LINE_AA)
+				cv2.imshow('cam1', img1)
+				
+				lock2.acquire()
+				img2, sizes2 = haar_cascade_detection(img1, body_classifier)
+				img2 = cv2.resize(img2, (h2, w2))
+				if len(sizes2) > 0:
+					print('danger!')
+					text = 'dangerous!'
+					cv2.putText(img2, text, (50, 50),
+				 	cv2.FONT_HERSHEY_SIMPLEX, 2.0, (0, 255, 0),
+				 		 lineType=cv2.LINE_AA)
+				cv2.imshow('cam2', img2)
+
+				lock1.release()
+				lock2.release()
+			if cv2.waitKey(1) & 0xFF == ord('q'):
+				break
+		else:
+			index += 1
+			print(index)
+		fps.update()
+	fps.stop()
+	print("[INFO] elapsed time: {:.2f}".format(fps.elapse()))
+	print("[INFO] approx. FPS: {:.2f}".format(fps.fps()))
+	
+	vs1.stop()
+	vs2.stop()
+	cv2.destroyAllWindows()
+
 
 if __name__ == '__main__':
 	#test('/Users/dai/Downloads/leftImg8bit_demoVideo/leftImg8bit/demoVideo/stuttgart_00')
 	#test_video_pair_2('LONDONWALKOxfordStreettoCarnabyStreetEngland.mp4', 'LONDONWALKOxfordStreettoCarnabyStreetEngland2.mp4')
-	test_video_pair_4('LONDONWALKOxfordStreettoCarnabyStreetEngland.mp4', 'LONDONWALKOxfordStreettoCarnabyStreetEngland2.mp4')
+	test_video_pair_5('LONDONWALKOxfordStreettoCarnabyStreetEngland.mp4', 'LONDONWALKOxfordStreettoCarnabyStreetEngland2.mp4')
 	#test_video('LONDONWALKOxfordStreettoCarnabyStreetEngland.mp4')
+	#test_video_pair('LONDONWALKOxfordStreettoCarnabyStreetEngland.mp4', 'LONDONWALKOxfordStreettoCarnabyStreetEngland2.mp4')
+
 
 
 
