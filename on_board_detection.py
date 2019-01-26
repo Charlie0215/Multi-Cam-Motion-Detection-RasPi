@@ -312,7 +312,9 @@ def test_video_pair_4(path1, path2):
 	for i in range(40):
 		img1 = vs1.read()
 		img2 = vs2.read()
+		#print('$'*30, index)
 		if index == 3: 
+			index = 0
 			cv2.imshow('cam1', img1)
 			cv2.imshow('cam2', img2)
 			if cv2.waitKey(1) & 0xFF == ord('q'):
@@ -321,11 +323,13 @@ def test_video_pair_4(path1, path2):
 			index += 1
 			print(index)
 		fps.update()
+	fps.stop()
 	print("[INFO] elapsed time: {:.2f}".format(fps.elapse()))
 	print("[INFO] approx. FPS: {:.2f}".format(fps.fps()))
-	fps.stop()
-	vs.stop()
-	cv2.distroyAllWindows()
+	
+	vs1.stop()
+	vs2.stop()
+	cv2.destroyAllWindows()
 	
 
 

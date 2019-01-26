@@ -3,8 +3,8 @@ import sys
 import time
 import threading
 
-pin_for_camera_1 = 17
-pin_for_camera_2 = 18
+pin_for_camera_1 = 17 # motor for cam1
+pin_for_camera_2 = 18 # motor for cam2
 #pin_camera_3 = 27
 #pin_camera_4 = 22
 

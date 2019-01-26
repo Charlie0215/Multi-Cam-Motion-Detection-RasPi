@@ -20,11 +20,14 @@ class FPS:
 	def start(self):
 		# start the timer
 		self._start = datetime.datetime.now()
+		#print('*'*30, self._start)
 		return self
 
 	def stop(self):
 		# stop the timer
 		self._end = datetime.datetime.now()
+		#print('*'*30, self._end)
+		return self
 
 	def update(self):
 		# incremental the number of frames examined during
@@ -42,7 +45,7 @@ class FPS:
 
 
 class WebcamVideoStream:
-	def __init__(self, input, src):
+	def __init__(self, input):#, src):
 		# initialize the video camera stream and read the first frame
 		# from the stream
 		self.stream = cv2.VideoCapture(input)
@@ -51,7 +54,7 @@ class WebcamVideoStream:
 		# initialize the variable used to indicate if the thread should 
 		# be stopped
 		self.stopped = False
-		self.src = src
+		#self.src = src
 
 	def start(self):
 		# start the thread to read frames from the video stream
