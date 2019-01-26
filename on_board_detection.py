@@ -345,58 +345,62 @@ def test_video_pair_5(path1, path2):
 	parser.add_argument('-d', dest='display', default=1, type=int, help='1: display image')
 	opt = parser.parse_args()
 	
-	vs1 = WebcamVideoStream_main_thread(path1, 1, 'haarcascade_pedestrian.xml').start()
-	vs2 = WebcamVideoStream_main_thread(path2, 2, 'haarcascade_pedestrian.xml').start()
+	vs1 = WebcamVideoStream_read_thread(path1, 1, 'haarcascade_pedestrian.xml').start()
+	vs2 = WebcamVideoStream_read_thread(path2, 2, 'haarcascade_pedestrian.xml').start()
 
 	body_classifier = cv2.CascadeClassifier('haarcascade_pedestrian.xml')
 
 	fps = FPS().start()
 	index = 0
-	#while True:
-	for i in range(4000):
+	while True:
+		print(index)
+		index += 1
+		flag1, img1 = vs1.read()
+		flag2, img2 = vs2.read()
 
-		img1 = vs1.read()
-		w1 = math.ceil(img1.shape[0] / 2)
-		h1 = math.ceil(img1.shape[1] / 2)
 		
-		img2 = vs2.read()
-		w2 = math.ceil(img2.shape[0] / 2)
-		h2 = math.ceil(img2.shape[1] / 2)
+		if flag1 == True:			
+			lock1.acquire()
+			w1 = math.ceil(img1.shape[0] / 2)
+			h1 = math.ceil(img1.shape[1] / 2)
+			img1 = cv2.cvtColor(img1, cv2.COLOR_BGR2GRAY)
+			img1, sizes1 = haar_cascade_detection(img1, body_classifier)
+			img1 = cv2.resize(img1, (h1, w1))
+			if len(sizes1) > 0:
+				print('danger!')
+				text = 'dangerous!'
+				cv2.putText(img1, text, (50, 50),
+			 	cv2.FONT_HERSHEY_SIMPLEX, 2.0, (0, 255, 0),
+			 		 lineType=cv2.LINE_AA)
 
-		img1 = cv2.cvtColor(img1, cv2.COLOR_BGR2GRAY)
-		img2 = cv2.cvtColor(img2, cv2.COLOR_BGR2GRAY)
-		if index == 1: 
-			index = 0
 			if opt.display == 1:
-				lock1.acquire()
-				img1, sizes1 = haar_cascade_detection(img1, body_classifier)
-				img1 = cv2.resize(img1, (h1, w1))
-				if len(sizes1) > 0:
-					print('danger!')
-					text = 'dangerous!'
-					cv2.putText(img1, text, (50, 50),
-				 	cv2.FONT_HERSHEY_SIMPLEX, 2.0, (0, 255, 0),
-				 		 lineType=cv2.LINE_AA)
 				cv2.imshow('cam1', img1)
-				
-				lock2.acquire()
-				img2, sizes2 = haar_cascade_detection(img1, body_classifier)
-				img2 = cv2.resize(img2, (h2, w2))
-				if len(sizes2) > 0:
-					print('danger!')
-					text = 'dangerous!'
-					cv2.putText(img2, text, (50, 50),
-				 	cv2.FONT_HERSHEY_SIMPLEX, 2.0, (0, 255, 0),
-				 		 lineType=cv2.LINE_AA)
-				cv2.imshow('cam2', img2)
 
-				lock1.release()
-				lock2.release()
-			if cv2.waitKey(1) & 0xFF == ord('q'):
-				break
-		else:
-			index += 1
-			print(index)
+			lock1.release()
+
+		if flag2 == True:
+			lock2.acquire()
+			w2 = math.ceil(img2.shape[0] / 2)
+			h2 = math.ceil(img2.shape[1] / 2)
+			img2 = cv2.cvtColor(img2, cv2.COLOR_BGR2GRAY)
+			img2, sizes2 = haar_cascade_detection(img1, body_classifier)
+			img2 = cv2.resize(img2, (h2, w2))
+			if len(sizes2) > 0:
+				print('danger!')
+				text = 'dangerous!'
+				cv2.putText(img2, text, (50, 50),
+			 	cv2.FONT_HERSHEY_SIMPLEX, 2.0, (0, 255, 0),
+			 		 lineType=cv2.LINE_AA)
+			cv2.imshow('cam2', img2)
+
+		
+			lock2.release()
+		if cv2.waitKey(1) & 0xFF == ord('q'):
+			break
+
+		if flag2 != True or flag1 != True:
+			break
+
 		fps.update()
 	fps.stop()
 	print("[INFO] elapsed time: {:.2f}".format(fps.elapse()))

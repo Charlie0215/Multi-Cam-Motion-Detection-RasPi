@@ -10,7 +10,7 @@ import threading
 
 lock1 = threading.Lock()
 
-kernel_size = 11
+kernel_size = 13
 imagePath = '/Users/dai/Desktop/Project/Multi-Cam-Motion-Detection-RasPi/pedestrian-detection/images/person_010.bmp'
 hog = cv2.HOGDescriptor()
 hog.setSVMDetector(cv2.HOGDescriptor_getDefaultPeopleDetector())
@@ -41,7 +41,7 @@ def haar_cascade_detection(image, classifier):
 	#image = cv2.GaussianBlur(image,(kernel_size,kernel_size),0)
 	masked_image = cv2.blur(masked_image, (kernel_size, kernel_size))
 
-	people = classifier.detectMultiScale(masked_image, 1.2, 3)
+	people = classifier.detectMultiScale(masked_image, 1.3, 5)
 	'''
 	for (x,y,w,h) in people:
 		size = (w * h).astype('float')
